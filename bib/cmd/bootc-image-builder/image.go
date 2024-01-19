@@ -32,7 +32,7 @@ type ManifestConfig struct {
 	ImgType string
 
 	// Build config
-	Config *BuildConfig
+	Blueprint *BuildConfig
 
 	// Repositories for a buildroot (or an installer tree in the future)
 	Repos []rpmmd.RepoConfig
@@ -86,8 +86,8 @@ func pipelinesForDiskImage(c *ManifestConfig, rng *rand.Rand) (image.ImageKind, 
 	img.ContainerBuildable = true
 
 	var customizations *blueprint.Customizations
-	if c.Config != nil && c.Config.Blueprint != nil {
-		customizations = c.Config.Blueprint.Customizations
+	if c.Blueprint != nil && c.Blueprint.Blueprint != nil {
+		customizations = c.Blueprint.Blueprint.Customizations
 	}
 
 	img.Users = users.UsersFromBP(customizations.GetUsers())
@@ -290,8 +290,8 @@ func pipelinesForISO(c *ManifestConfig, rng *rand.Rand) (image.ImageKind, error)
 	img.ISOLabelTempl = "Container-Installer-%s"
 
 	var customizations *blueprint.Customizations
-	if c.Config != nil && c.Config.Blueprint != nil {
-		customizations = c.Config.Blueprint.Customizations
+	if c.Blueprint != nil && c.Blueprint.Blueprint != nil {
+		customizations = c.Blueprint.Blueprint.Customizations
 	}
 
 	img.Users = users.UsersFromBP(customizations.GetUsers())

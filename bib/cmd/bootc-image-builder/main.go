@@ -161,19 +161,19 @@ func manifestFromCobra(cmd *cobra.Command, args []string) ([]byte, error) {
 
 	imgref := args[0]
 	rpmCacheRoot, _ := cmd.Flags().GetString("rpmmd")
-	configFile, _ := cmd.Flags().GetString("config")
+	blueprintFile, _ := cmd.Flags().GetString("blueprint")
 	tlsVerify, _ := cmd.Flags().GetBool("tls-verify")
 	imgType, _ := cmd.Flags().GetString("type")
 
-	config := BuildConfig{}
-	if configFile != "" {
-		config = loadConfig(configFile)
+	blueprint := BuildConfig{}
+	if blueprintFile != "" {
+		blueprint = loadConfig(blueprintFile)
 	}
 
 	manifestConfig := &ManifestConfig{
 		Imgref:       imgref,
 		ImgType:      imgType,
-		Config:       &config,
+		Blueprint:    &blueprint,
 		Repos:        repos,
 		Architecture: hostArch,
 		TLSVerify:    tlsVerify,
@@ -293,7 +293,7 @@ func main() {
 	}
 	rootCmd.AddCommand(manifestCmd)
 	manifestCmd.Flags().String("rpmmd", "/var/cache/osbuild/rpmmd", "rpm metadata cache directory")
-	manifestCmd.Flags().String("config", "", "build config file")
+	manifestCmd.Flags().String("blueprint", "", "blueprint file")
 	manifestCmd.Flags().String("type", "qcow2", "image type to build [qcow2, ami]")
 	manifestCmd.Flags().Bool("tls-verify", true, "require HTTPS and verify certificates when contacting registries")
 
@@ -309,7 +309,7 @@ func main() {
 	check(buildCmd.MarkFlagDirname("output"))
 	check(buildCmd.MarkFlagDirname("store"))
 	check(buildCmd.MarkFlagDirname("rpmmd"))
-	check(buildCmd.MarkFlagFilename("config"))
+	check(buildCmd.MarkFlagFilename("blueprint"))
 	buildCmd.MarkFlagsRequiredTogether("aws-region", "aws-bucket", "aws-ami-name")
 
 	check(rootCmd.Execute())
