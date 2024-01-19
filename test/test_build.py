@@ -85,8 +85,8 @@ def image_type_fixture(tmpdir_factory, build_container, request, force_aws_uploa
         },
     }
 
-    config_json_path = output_path / "config.json"
-    config_json_path.write_text(json.dumps(CFG), encoding="utf-8")
+    blueprint_path = output_path / "blueprint.toml"
+    blueprint_path.write_text(json.dumps(CFG), encoding="utf-8")
 
     cursor = testutil.journal_cursor()
 
@@ -119,7 +119,7 @@ def image_type_fixture(tmpdir_factory, build_container, request, force_aws_uploa
             *creds_args,
             build_container,
             container_to_build_ref(),
-            "--config", "/output/config.json",
+            "--blueprint", "/output/blueprint.toml",
             "--type", image_type,
             *upload_args,
         ])
