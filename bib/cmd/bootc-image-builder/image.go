@@ -60,6 +60,9 @@ type ManifestConfig struct {
 	// Extracted information about the source container image
 	SourceInfo *source.Info
 
+	// PartitionTableType specifies which flavor of partition tables to use
+	PartitionTableType string
+
 	// RootFSType specifies the filesystem type for the root partition
 	RootFSType string
 }
@@ -225,7 +228,7 @@ func genPartitionTableDiskCust(c *ManifestConfig, diskCust *blueprint.DiskCustom
 
 	diskCust.MinSize = max(diskCust.MinSize, c.RootfsMinsize)
 
-	basept, ok := partitionTables[c.Architecture.String()]
+	basept, ok := partitionTables[c.PartitionTableType][c.Architecture.String()]
 	if !ok {
 		return nil, fmt.Errorf("pipelines: no partition tables defined for %s", c.Architecture)
 	}
@@ -244,7 +247,7 @@ func genPartitionTableDiskCust(c *ManifestConfig, diskCust *blueprint.DiskCustom
 }
 
 func genPartitionTableFsCust(c *ManifestConfig, fsCust []blueprint.FilesystemCustomization, rng *rand.Rand) (*disk.PartitionTable, error) {
-	basept, ok := partitionTables[c.Architecture.String()]
+	basept, ok := partitionTables[c.PartitionTableType][c.Architecture.String()]
 	if !ok {
 		return nil, fmt.Errorf("pipelines: no partition tables defined for %s", c.Architecture)
 	}

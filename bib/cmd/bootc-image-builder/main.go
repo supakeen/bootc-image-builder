@@ -179,6 +179,7 @@ func manifestFromCobra(cmd *cobra.Command, args []string) ([]byte, *mTLSConfig, 
 	imgTypes, _ := cmd.Flags().GetStringArray("type")
 	rpmCacheRoot, _ := cmd.Flags().GetString("rpmmd")
 	targetArch, _ := cmd.Flags().GetString("target-arch")
+	partitionTableType, _ := cmd.Flags().GetString("partition-table-variant")
 	tlsVerify, _ := cmd.Flags().GetBool("tls-verify")
 	localStorage, _ := cmd.Flags().GetBool("local")
 	rootFs, _ := cmd.Flags().GetString("rootfs")
@@ -196,6 +197,10 @@ func manifestFromCobra(cmd *cobra.Command, args []string) ([]byte, *mTLSConfig, 
 		cntArch = arch.FromString(targetArch)
 	}
 	// TODO: add "target-variant", see https://github.com/osbuild/bootc-image-builder/pull/139/files#r1467591868
+
+	if _, ok := partitionTables[partitionTableType]; !ok {
+		return nil, nil, fmt.Errorf("unknown partition table variant %v", partitionTableType)
+	}
 
 	if localStorage {
 		if err := setup.ValidateHasContainerStorageMounted(); err != nil {
@@ -295,15 +300,16 @@ func manifestFromCobra(cmd *cobra.Command, args []string) ([]byte, *mTLSConfig, 
 	}
 
 	manifestConfig := &ManifestConfig{
-		Architecture:   cntArch,
-		Config:         config,
-		ImageTypes:     imageTypes,
-		Imgref:         imgref,
-		TLSVerify:      tlsVerify,
-		RootfsMinsize:  cntSize * containerSizeToDiskSizeMultiplier,
-		DistroDefPaths: distroDefPaths,
-		SourceInfo:     sourceinfo,
-		RootFSType:     rootfsType,
+		Architecture:       cntArch,
+		Config:             config,
+		ImageTypes:         imageTypes,
+		Imgref:             imgref,
+		TLSVerify:          tlsVerify,
+		RootfsMinsize:      cntSize * containerSizeToDiskSizeMultiplier,
+		DistroDefPaths:     distroDefPaths,
+		SourceInfo:         sourceinfo,
+		RootFSType:         rootfsType,
+		PartitionTableType: partitionTableType,
 	}
 
 	manifest, repos, err := makeManifest(manifestConfig, solver, rpmCacheRoot)
@@ -590,6 +596,7 @@ func buildCobraCmdline() (*cobra.Command, error) {
 	manifestCmd.Flags().Bool("tls-verify", true, "require HTTPS and verify certificates when contacting registries")
 	manifestCmd.Flags().String("rpmmd", "/rpmmd", "rpm metadata cache directory")
 	manifestCmd.Flags().String("target-arch", "", "build for the given target architecture (experimental)")
+	manifestCmd.Flags().String("partition-table-variant", "default", "partition table variant to use (experimental) [default, sbc]")
 	manifestCmd.Flags().StringArray("type", []string{"qcow2"}, fmt.Sprintf("image types to build [%s]", imagetypes.Available()))
 	manifestCmd.Flags().Bool("local", false, "use a local container rather than a container from a registry")
 	manifestCmd.Flags().String("rootfs", "", "Root filesystem type. If not given, the default configured in the source container image is used.")

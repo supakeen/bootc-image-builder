@@ -81,50 +81,97 @@ var rootPartition = disk.Partition{
 	},
 }
 
-var partitionTables = distro.BasePartitionTableMap{
-	arch.ARCH_X86_64.String(): disk.PartitionTable{
-		UUID: diskUuidOfUnknownOrigin,
-		Type: disk.PT_GPT,
-		Partitions: []disk.Partition{
-			{
-				Size:     1 * MebiByte,
-				Bootable: true,
-				Type:     disk.BIOSBootPartitionGUID,
-				UUID:     disk.BIOSBootPartitionUUID,
+var partitionTables = map[string]distro.BasePartitionTableMap{
+	"default": distro.BasePartitionTableMap{
+		arch.ARCH_X86_64.String(): disk.PartitionTable{
+			UUID: diskUuidOfUnknownOrigin,
+			Type: disk.PT_GPT,
+			Partitions: []disk.Partition{
+				{
+					Size:     1 * MebiByte,
+					Bootable: true,
+					Type:     disk.BIOSBootPartitionGUID,
+					UUID:     disk.BIOSBootPartitionUUID,
+				},
+				efiPartition,
+				bootPartition,
+				rootPartition,
 			},
-			efiPartition,
-			bootPartition,
-			rootPartition,
 		},
-	},
-	arch.ARCH_AARCH64.String(): disk.PartitionTable{
-		UUID: diskUuidOfUnknownOrigin,
-		Type: disk.PT_GPT,
-		Partitions: []disk.Partition{
-			efiPartition,
-			bootPartition,
-			rootPartition,
-		},
-	},
-	arch.ARCH_S390X.String(): disk.PartitionTable{
-		UUID: diskUuidOfUnknownOrigin,
-		Type: disk.PT_GPT,
-		Partitions: []disk.Partition{
-			bootPartition,
-			rootPartition,
-		},
-	},
-	arch.ARCH_PPC64LE.String(): disk.PartitionTable{
-		UUID: diskUuidOfUnknownOrigin,
-		Type: disk.PT_GPT,
-		Partitions: []disk.Partition{
-			{
-				Size:     4 * MebiByte,
-				Type:     disk.PRePartitionGUID,
-				Bootable: true,
+		arch.ARCH_AARCH64.String(): disk.PartitionTable{
+			UUID: diskUuidOfUnknownOrigin,
+			Type: disk.PT_GPT,
+			Partitions: []disk.Partition{
+				efiPartition,
+				bootPartition,
+				rootPartition,
 			},
-			bootPartition,
-			rootPartition,
+		},
+		arch.ARCH_S390X.String(): disk.PartitionTable{
+			UUID: diskUuidOfUnknownOrigin,
+			Type: disk.PT_GPT,
+			Partitions: []disk.Partition{
+				bootPartition,
+				rootPartition,
+			},
+		},
+		arch.ARCH_PPC64LE.String(): disk.PartitionTable{
+			UUID: diskUuidOfUnknownOrigin,
+			Type: disk.PT_GPT,
+			Partitions: []disk.Partition{
+				{
+					Size:     4 * MebiByte,
+					Type:     disk.PRePartitionGUID,
+					Bootable: true,
+				},
+				bootPartition,
+				rootPartition,
+			},
+		},
+	},
+
+	// Alternative partition tables to be used for single board computers, this
+	// partition table is compatible with the Raspberry Pi 3, 4, 5, and many other
+	// popular arm64 based boards.
+	//
+	// Note that using these partition tables alone will *not* make a system boot
+	// as `bootupd` does not copy firmware files. This either needs to be done manually
+	// by mounting the resulting disk image or by instructing `bootupd` to do so in
+	// this manner, see:
+	//
+	// 1. https://github.com/coreos/bootupd/issues/651
+	// 2. https://github.com/ondrejbudai/fedora-bootc-raspi
+	//
+	// We re-use as much as possible here from the predefined partitions, generally
+	// that means their payloads and sizes but not their types as we're on a DOS
+	// partition table here.
+	//
+	// The partition table here is taken from `images`:
+	//
+	// 1. https://github.com/osbuild/images/blob/main/pkg/distro/fedora/partition_tables.go#L220
+	"rpi": distro.BasePartitionTableMap{
+		arch.ARCH_AARCH64.String(): disk.PartitionTable{
+			UUID:        "0xc1748067",
+			Type:        disk.PT_DOS,
+			StartOffset: 8 * MebiByte,
+			Partitions: []disk.Partition{
+				{
+					Size:     efiPartition.Size,
+					Type:     disk.DosFat16B,
+					Bootable: true,
+					Payload:  efiPartition.Payload,
+				},
+				{
+					Size:    bootPartition.Size,
+					Type:    disk.DosLinuxTypeID,
+					Payload: bootPartition.Payload,
+				},
+				{
+					Size:    rootPartition.Size,
+					Type:    disk.DosLinuxTypeID,
+					Payload: rootPartition.Payload,
+				},
+			},
 		},
 	},
 }
