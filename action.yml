@@ -1,0 +1,55 @@
+name: Bootc Image Builder Action
+description: An action to generate ISOs and disk images for Bootc images
+author: Robert Sturla
+
+# Define your inputs here.
+inputs:
+  config-file:
+    description: 'The path to the configuration file'
+    required: true
+  image:
+    description: 'The image, including the registry and tag'
+    required: true
+  builder-image:
+    description: 'The Bootc Image Builder image to use for running the action'
+    required: false
+    default: 'quay.io/centos-bootc/bootc-image-builder:latest'
+  chown:
+    description: 'The user and group to chown the output files to'
+    required: false
+  rootfs:
+    description: 'The path to the rootfs'
+    required: false
+  tls-verify:
+    description: 'Whether to verify TLS certificates'
+    required: false
+    default: 'true'
+  types:
+    description: 'The types of images to generate'
+    required: false
+
+  # AMI-specific inputs
+  aws-bucket:
+    description: 'The AWS S3 bucket to temporarily store the AWS AMI image to'
+    required: false
+  aws-ami-name:
+    description: 'The name of the AWS AMI image'
+    required: false
+  aws-region:
+    description: 'The AWS region to make the AWS AMI image available in'
+    required: false
+
+outputs:
+  output-directory:
+    description: 'The directory where the generated artifacts are stored'
+  output-paths:
+    description:
+      'A JSON array of the artifact types to the generated disk images or
+      ISOs.  AWS AMIs will not be included in this output.  Each object in the
+      array has the following keys: type and path'
+  manifest-path:
+    description: 'The path to the manifest file'
+
+runs:
+  using: node20
+  main: dist/index.js
